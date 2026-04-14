@@ -56,13 +56,14 @@ def encode_base64(source_code: str) -> tuple[bool, str]:
             return False, f"Invalid Python code: {err}"
 
         encoded = base64.b64encode(source_code.encode("utf-8")).decode("ascii")
+        wrapped = "\n    ".join(textwrap.wrap(encoded, 60))
 
         payload = textwrap.dedent(f"""\
             {build_header("Base64")}
             import base64 as _b64
 
             _code = (
-                "{encoded}"
+                "{wrapped}"
             )
             exec(_b64.b64decode(_code).decode("utf-8"))
         """)
@@ -88,13 +89,14 @@ def encode_marshal(source_code: str) -> tuple[bool, str]:
         code_obj = compile(source_code, "<encoded>", "exec")
         marshalled = marshal.dumps(code_obj)
         encoded = base64.b64encode(marshalled).decode("ascii")
+        wrapped = "\n    ".join(textwrap.wrap(encoded, 60))
 
         payload = textwrap.dedent(f"""\
             {build_header("Marshal")}
             import marshal as _m, base64 as _b64
 
             _data = (
-                "{encoded}"
+                "{wrapped}"
             )
             exec(_m.loads(_b64.b64decode(_data)))
         """)
@@ -133,13 +135,14 @@ def encode_ultra(source_code: str) -> tuple[bool, str]:
 
         # Layer 4 — base64 encode
         encoded = base64.b64encode(compressed).decode("ascii")
+        wrapped = "\n    ".join(textwrap.wrap(encoded, 60))
 
         payload = textwrap.dedent(f"""\
             {build_header("Ultra (Base64 + zlib + Marshal)")}
             import marshal as _m, zlib as _z, base64 as _b64
 
             _ultra = (
-                "{encoded}"
+                "{wrapped}"
             )
             exec(_m.loads(_z.decompress(_b64.b64decode(_ultra))))
         """)
